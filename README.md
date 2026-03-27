@@ -1,4 +1,4 @@
-# AetherTwin — Climate Digital Twin
+# EarthGuard — Climate Digital Twin
 ### Hackathon Edition · Pollution Control Problem Statement
 
 ---
