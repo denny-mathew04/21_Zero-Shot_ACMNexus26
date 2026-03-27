@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EarthGuard — Climate Digital Twin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Loading screen -->
+<div class="loading-overlay" id="loader">
+  <div class="loading-logo">EarthGuard</div>
+  <div class="loading-sub">Climate Digital Twin Platform</div>
+  <div class="loading-bar-wrap"><div class="loading-bar" id="load-bar"></div></div>
+  <div class="loading-text" id="load-status">Connecting to live data feeds...</div>
+  <div class="loading-dots"><span></span><span></span><span></span></div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">🌐</div>
+    <div>
+      <div class="logo-text">EarthGuard</div>
+      <div class="logo-sub">Climate Digital Twin</div>
+    </div>
+  </div>
+  <div class="header-center">
+    <div class="nav-pill">
+      <button class="active" data-view="dashboard">Dashboard</button>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">☀️ Light</button>
+    <div class="live-badge"><div class="live-dot"></div>LIVE DATA</div>
+    <div class="refresh-countdown" id="refresh-countdown">
+      <span class="countdown-icon">🔄</span>
+      <span class="countdown-label">Refresh in</span>
+      <span class="countdown-timer" id="countdown-timer">15:00</span>
+    </div>
+  </div>
+</header>
+
+<!-- CITY + API SEARCH BAR -->
+<div class="city-bar">
+  <!-- Free text search -->
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="city-input" placeholder="Search any city worldwide..." autocomplete="off">
+    <div class="search-dropdown" id="city-dropdown"></div>
+  </div>
+
+  <!-- Ensemble model badge -->
+  <div class="algo-selector">
+    <label class="select-label">PREDICTION ENGINE</label>
+    <div class="ensemble-badge-display">
+      <span class="ensemble-icon">🏆</span>
+      <span class="ensemble-name">Ensemble Model</span>
+      <span class="ensemble-sub">RF · GBM · XGBoost · LSTM · SVR · LR</span>
+    </div>
+  </div>
+
+  <!-- API Status -->
+  <div class="api-status-row">
+    <div class="api-pill" id="openaq-status">
+      <span class="api-dot loading"></span>
+      <span>OpenAQ</span>
+    </div>
+    <div class="api-pill" id="owm-status">
+      <span class="api-dot loading"></span>
+      <span>Open-Meteo</span>
+    </div>
+  </div>
+</div>
+
+<!-- API KEY SETUP (shown if keys missing) -->
+<div id="api-setup-banner" class="api-banner" style="display:none">
+  <div class="banner-inner">
+    <div class="banner-icon">🔑</div>
+    <div class="banner-text">
+      <strong>Configure API Keys</strong>
+      <p>Enter your optional OpenAQ API key. Open-Meteo is free and active by default.</p>
+    </div>
+    <div class="banner-inputs">
+      <input type="text" id="openaq-key-input" placeholder="OpenAQ API Key (optional)" class="api-key-input">
+      <button class="save-keys-btn" onclick="saveApiKeys()">Save & Connect</button>
+    </div>
+    <button class="banner-close" onclick="dismissBanner()">×</button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main" id="main-content">
+
+  <!-- KPI ROW -->
+  <div class="kpi-row">
+    <div class="kpi-card" style="--card-accent:#ff4040">
+      <div class="kpi-label">AQI Index</div>
+      <div class="kpi-value" id="kpi-aqi"><span class="kpi-loading">—</span></div>
+      <div class="kpi-change" id="kpi-aqi-status">Loading...</div>
+      <div class="kpi-icon">🌫️</div>
+      <div class="kpi-source mono" id="kpi-aqi-source">OpenAQ</div>
+    </div>
+    <div class="kpi-card" style="--card-accent:#00c8ff">
+      <div class="kpi-label">Temperature</div>
+      <div class="kpi-value" id="kpi-temp"><span class="kpi-loading">—</span></div>
+      <div class="kpi-change" id="kpi-feels">Loading...</div>
+      <div class="kpi-icon">🌡️</div>
+      <div class="kpi-source mono">Open-Meteo</div>
+    </div>
+    <div class="kpi-card" style="--card-accent:#00ff88">
+      <div class="kpi-label">Humidity</div>
+      <div class="kpi-value" id="kpi-humidity"><span class="kpi-loading">—</span></div>
+      <div class="kpi-change" id="kpi-hum-sub">Loading...</div>
+      <div class="kpi-icon">💧</div>
+      <div class="kpi-source mono">Open-Meteo</div>
+    </div>
+    <div class="kpi-card" style="--card-accent:#ffaa00">
+      <div class="kpi-label">Wind Speed</div>
+      <div class="kpi-value" id="kpi-wind"><span class="kpi-loading">—</span></div>
+      <div class="kpi-change" id="kpi-wind-dir">Loading...</div>
+      <div class="kpi-icon">🌬️</div>
+      <div class="kpi-source mono">Open-Meteo</div>
+    </div>
+    <div class="kpi-card" style="--card-accent:#b347ff">
+      <div class="kpi-label">PM2.5</div>
+      <div class="kpi-value" id="kpi-pm25"><span class="kpi-loading">—</span></div>
+      <div class="kpi-change" id="kpi-pm25-sub">WHO: &lt;15 µg/m³</div>
+      <div class="kpi-icon">🔬</div>
+      <div class="kpi-source mono">OpenAQ</div>
+    </div>
+    <div class="kpi-card" style="--card-accent:#ff6b35">
+      <div class="kpi-label">PM10</div>
+      <div class="kpi-value" id="kpi-pm10"><span class="kpi-loading">—</span></div>
+      <div class="kpi-change" id="kpi-pm10-sub">WHO: &lt;45 µg/m³</div>
+      <div class="kpi-icon">🌪️</div>
+      <div class="kpi-source mono">OpenAQ</div>
+    </div>
+  </div>
+
+  <!-- ROW 1: AQI GAUGE + WEATHER -->
+  <div class="content-grid two-col">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🎯 Air Quality Index <span class="card-badge orange" id="aqi-label-badge">LOADING</span></div>
+        <div class="tab-bar-mini">
+          <button class="mini-tab active" onclick="setAqiView('gauge',this)">Gauge</button>
+          <button class="mini-tab" onclick="setAqiView('bar',this)">Breakdown</button>
+        </div>
+      </div>
+      <div id="aqi-gauge-view">
+        <div class="aqi-gauge-wrap">
+          <div class="gauge-ring">
+            <svg viewBox="0 0 200 200" width="200" height="200">
+              <circle class="gauge-bg" cx="100" cy="100" r="80"/>
+              <circle class="gauge-fill" id="gauge-circle" cx="100" cy="100" r="80"
+                stroke="#555" stroke-dasharray="502.4" stroke-dashoffset="502.4"/>
+            </svg>
+            <div class="gauge-center">
+              <div class="gauge-num" id="gauge-num">—</div>
+              <div class="gauge-cat" id="gauge-cat">LOADING</div>
+              <div class="gauge-city" id="gauge-city">Select a city</div>
+            </div>
+          </div>
+        </div>
+        <div class="pollutant-grid" id="pollutant-grid"></div>
+      </div>
+      <div id="aqi-bar-view" style="display:none">
+        <div class="chart-wrap-tall"><canvas id="aqi-breakdown-chart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">⛅ Live Weather <span class="card-badge" id="weather-city-badge">—</span></div>
+        <button class="ctrl-btn" onclick="fetchCurrentCity()">↻ Refresh</button>
+      </div>
+      <div class="weather-grid" id="weather-grid">
+        <div class="weather-skeleton">Loading weather data...</div>
+      </div>
+      <div class="section-divider">
+        7-Day Forecast
+        <span class="divider-badge predicted-badge">🤖 Ensemble Predicted</span>
+      </div>
+      <div class="forecast-strip" id="forecast-strip">
+        <div class="weather-skeleton">Loading forecast...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 2: TREND -->
+  <div class="content-grid one-col">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📈 AQI Trend &amp; Prediction
+          <span class="card-badge green">ENSEMBLE</span>
+        </div>
+        <div class="tab-bar-mini">
+          <button class="mini-tab active" onclick="setTrendRange('24h',this)">24H</button>
+          <button class="mini-tab" onclick="setTrendRange('7d',this)">7D</button>
+          <button class="mini-tab" onclick="setTrendRange('30d',this)">30D</button>
+        </div>
+      </div>
+      <div class="chart-wrap-tall"><canvas id="trend-chart"></canvas></div>
+      <div class="trend-stats" id="trend-stats"></div>
+    </div>
+  </div>
+
+  <!-- ROW 3: FULL MAP -->
+  <div class="card full-map-card">
+    <div class="card-header">
+      <div class="card-title">🗺️ Global Live Pollution Map
+        <span class="card-badge">OPENAQ STATIONS</span>
+      </div>
+      <div class="map-controls">
+        <div class="tab-bar-mini">
+          <button class="mini-tab active" onclick="setMapLayer('aqi',this)">AQI</button>
+          <button class="mini-tab" onclick="setMapLayer('pm25',this)">PM2.5</button>
+          <button class="mini-tab" onclick="setMapLayer('pm10',this)">PM10</button>
+          <button class="mini-tab" onclick="setMapLayer('no2',this)">NO₂</button>
+          <button class="mini-tab" onclick="setMapLayer('temp',this)">Temp</button>
+        </div>
+        <button class="ctrl-btn" onclick="loadMapStations()">↻ Refresh Stations</button>
+      </div>
+    </div>
+    <div class="map-container" style="position:relative">
+      <div id="map"></div>
+      <div class="map-legend" id="map-legend">
+        <div class="legend-title">AQI LEVELS</div>
+        <div class="legend-items">
+          <div class="legend-item"><div class="legend-dot" style="background:#00e400"></div><span>Good (0–50)</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#ffff00"></div><span>Moderate (51–100)</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#ff7e00"></div><span>Unhealthy Sensitive (101–150)</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#ff0000"></div><span>Unhealthy (151–200)</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#8f3f97"></div><span>Very Unhealthy (201–300)</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#7e0023"></div><span>Hazardous (300+)</span></div>
+        </div>
+      </div>
+      <div class="map-station-count" id="map-station-count">Loading stations...</div>
+    </div>
+  </div>
+
+  <!-- ROW 4: HEALTH IMPACTS -->
+  <div class="content-grid one-col">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🏥 Health Impact Assessment
+          <span class="card-badge purple">EQUATION MODEL</span>
+        </div>
+        <span class="card-badge orange" id="health-aqi-badge">—</span>
+      </div>
+      <div class="health-equation-note" id="health-equation-note">
+        <span class="eq-icon">𝑓</span>
+        <span>Risk = α·AQI + β·PM₂.₅ + γ·NO₂ + δ_group — threshold determines level</span>
+      </div>
+      <div class="health-grid" id="health-grid">
+        <div class="weather-skeleton">Loading health data...</div>
+      </div>
+      <div class="section-divider">Population at Risk</div>
+      <div class="compare-grid" id="risk-bars"></div>
+    </div>
+  </div>
+
+  <!-- ROW 5: WIND ROSE + STATIONS LIST -->
+  <div class="content-grid two-col">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">💨 Wind Rose</div>
+        <span class="card-badge" id="wind-badge">—</span>
+      </div>
+      <canvas id="wind-rose" width="280" height="260" style="display:block;margin:0 auto"></canvas>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🚨 Live Alerts</div>
+        <span class="card-badge orange" id="alert-count">—</span>
+      </div>
+      <div class="alert-list" id="alert-list">
+        <div class="weather-skeleton">Loading alerts...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 6: EMISSIONS -->
+  <div class="content-grid one-col">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🏭 Emission Sources</div>
+        <span class="card-badge green">SECTORAL</span>
+      </div>
+      <div class="chart-wrap-tall"><canvas id="emissions-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ROW 7: RECOMMENDATIONS -->
+  <div class="content-grid one-col">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">💡 AI Policy Recommendations</div>
+        <span class="card-badge green">ADAPTIVE ENGINE</span>
+      </div>
+      <div id="recommendations"></div>
+    </div>
+  </div>
+
+</div><!-- end .main -->
+
+<!-- Scripts -->
+<script src="js/config.js"></script>
+<script src="js/ml.js"></script>
+<script src="js/api.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/map.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
