@@ -13,52 +13,21 @@
 ### Issues Faced
 - None
 
-## 12:47
-
-### Features Added
-- Added local template image assets (template_acm.png, template_clique.png)
-- Refactored AGENTS.md, README.md, and CHANGELOG.md to use 24-hour time format (HH:MM) instead of "Hour X"
-
-### Files Modified
-- AGENTS.md
-- CHANGELOG.md
-- README.md
-- template_acm.png
-- template_clique.png
-
-### Issues Faced
-- Initial remote image download attempt failed, resolved by using provided local files
-
-## 18:16
-
-### Features Added
-- Designed and initialized the Next.js app with Tailwind v4
-- Created the Deck.gl Mapbox core mapping interface with Heatmap sensors
-- Implemented a Light Mode Neo-Brutalist dashboard layout using Bento Grids
-- Ensured responsiveness and high-contrast color palette
-
-### Files Modified
-- src/app/globals.css
-- src/app/page.tsx
-- src/components/MapComponent.tsx
-- src/components/DashboardLayout.tsx
-- package.json
-- tailwind.config.ts
-
-### Issues Faced
-- Parsing Next.js CLI flags due to PowerShell splatting operator issues; resolved by using quotes around @deck.gl packages.
-
 ## 18:34
 
 ### Features Added
-- Fixed Mapbox import resolution by mapping directly to the `react-map-gl/mapbox` subpath.
-- Fixed Recharts rendering warnings regarding container dimensions.
-- Purged Next.js Turbopack cache to resolve persistent compilation artifacts.
+- Developed Environmental Digital Twin `environmental_twin.py` script.
+- Built Scikit-Learn `RandomForestRegressor` for forecasting PM2.5 risk levels trained on 10 synthetic meteorological/activity features (temperature, humidity, traffic, greenery, rain, time_of_day, weekend patterns, etc.).
+- Established an 80/20 train/test split utilizing `StandardScaler`.
+- Implemented `predict_risk(data)` function adhering to WHO AQI thresholds.
+- Configured programmatic model export (`environmental_risk_model.pkl`, `scaler.pkl`) utilizing `joblib`.
+- Provisioned Python virtual environment `venv` and fulfilled dependencies.
 
 ### Files Modified
-- src/components/MapComponent.tsx
-- src/components/DashboardLayout.tsx
-- package.json
+- CHANGELOG.md
+- environmental_twin.py
+- environmental_risk_model.pkl (generated)
+- scaler.pkl (generated)
 
 ### Issues Faced
-- Turbopack violently cached a missing module error due to starting the dev server prior to `npm install` completing; resolved by manually deleting the `.next` directory.
+- Initial remote image download attempt failed, resolved by using provided local files
