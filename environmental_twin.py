@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -93,8 +94,10 @@ def train_and_export_model():
     
     # 5. EXPORT
     print("5. EXPORT: Saving model and scaler...")
-    joblib.dump(model, 'environmental_risk_model.pkl')
-    joblib.dump(scaler, 'scaler.pkl')
+    # Use absolute path for export
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    joblib.dump(model, os.path.join(current_dir, 'environmental_risk_model.pkl'))
+    joblib.dump(scaler, os.path.join(current_dir, 'scaler.pkl'))
     print("   -> Export complete.")
 
 def predict_risk(data):
@@ -103,9 +106,17 @@ def predict_risk(data):
     Takes a dictionary of features and returns a predicted 'Risk Level'
     based on WHO AQI thresholds for PM2.5.
     """
-    # Load model and scaler
-    model = joblib.load('environmental_risk_model.pkl')
-    scaler = joblib.load('scaler.pkl')
+    # Load model and scaler using absolute paths
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    model_path = os.path.join(current_dir, 'environmental_risk_model.pkl')
+    scaler_path = os.path.join(current_dir, 'scaler.pkl')
+    
+    if not os.path.exists(model_path) or not os.path.exists(scaler_path):
+        # Trigger training if not exists
+        train_and_export_model()
+
+    model = joblib.load(model_path)
+    scaler = joblib.load(scaler_path)
     
     # Expected feature order
     features = ['temperature', 'humidity', 'wind_speed', 'wind_direction', 

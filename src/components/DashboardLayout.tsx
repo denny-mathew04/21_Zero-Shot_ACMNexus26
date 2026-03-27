@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid } from 'recharts';
 import { Bell, Activity, Wind, Droplets, Thermometer, User, ShieldAlert, Cpu } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -20,6 +20,52 @@ const pm25Data = [
 
 export default function DashboardLayout() {
   const [timeOffset, setTimeOffset] = useState(0);
+  const [liveData, setLiveData] = useState<any>(null);
+  const [prediction, setPrediction] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Default coordinates (e.g., Bangalore)
+  const lat = 12.9716;
+  const lon = 77.5946;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch Live Data
+        const liveRes = await fetch(`http://localhost:8000/live?lat=${lat}&lon=${lon}`);
+        const liveJson = await liveRes.json();
+        setLiveData(liveJson);
+
+        // Fetch Prediction
+        const predictRes = await fetch(`http://localhost:8000/predict`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            temperature: liveJson.temp || 25,
+            humidity: liveJson.humidity || 60,
+            wind_speed: liveJson.wind_speed || 5,
+            wind_direction: 180,
+            traffic_density: 70,
+            industrial_activity_index: 50,
+            precipitation: 0,
+            greenery_index: 30,
+            time_of_day: new Date().getHours(),
+            is_weekend: [0, 6].includes(new Date().getDay()) ? 1 : 0
+          })
+        });
+        const predictJson = await predictRes.json();
+        setPrediction(predictJson);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 30000); // Update every 30s
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="flex flex-col h-screen w-full bg-[#FFFFFF] text-[#111827] overflow-hidden font-sans">
@@ -60,19 +106,19 @@ export default function DashboardLayout() {
                 <span className="text-sm font-semibold text-slate-500 uppercase">Current AQI</span>
                 <span className="px-2 py-1 bg-[#10B981]/20 text-[#10B981] text-xs font-bold rounded border border-[#10B981]">Stable</span>
               </div>
-              <div className="text-5xl font-black mb-4">42</div>
+              <div className="text-5xl font-black mb-4">{liveData?.aqi ?? 42}</div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-2">
                   <Thermometer className="w-4 h-4 text-[#0047AB]" />
-                  <span className="text-sm font-medium">31°C</span>
+                  <span className="text-sm font-medium">{liveData?.temp?.toFixed(1) ?? 31}°C</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Droplets className="w-4 h-4 text-[#0047AB]" />
-                  <span className="text-sm font-medium">68%</span>
+                  <span className="text-sm font-medium">{liveData?.humidity ?? 68}%</span>
                 </div>
                 <div className="flex items-center gap-2 col-span-2">
                   <Wind className="w-4 h-4 text-[#0047AB]" />
-                  <span className="text-sm font-medium">12 km/h NW</span>
+                  <span className="text-sm font-medium">{liveData?.wind_speed?.toFixed(1) ?? 12} km/h</span>
                 </div>
               </div>
             </div>
@@ -133,28 +179,15 @@ export default function DashboardLayout() {
           <h2 className="text-xl font-bold tracking-tight">Personalized Risks</h2>
           
           <div className="grid grid-cols-1 gap-4">
-            {/* Bento Alert 1 */}
-            <div className="bg-[#FFFFFF] border-2 border-slate-800 p-4 rounded-xl shadow-[4px_4px_0_0_rgba(0,0,0,0.08)] border-l-8 border-l-[#10B981] transition-transform hover:-translate-y-1">
+            {/* Prediction Alert */}
+            <div className={`bg-[#FFFFFF] border-2 border-slate-800 p-4 rounded-xl shadow-[4px_4px_0_0_rgba(0,0,0,0.08)] border-l-8 ${prediction?.Risk_Level === 'Low' ? 'border-l-[#10B981]' : 'border-l-[#F97316]'} transition-transform hover:-translate-y-1`}>
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="font-bold text-slate-800">Safe for Asthmatics</h3>
-                  <p className="text-xs text-slate-500 mt-1">Current zone is stable. Outdoor activity is safe.</p>
+                  <h3 className="font-bold text-slate-800">Risk Level: {prediction?.Risk_Level ?? 'Checking...'}</h3>
+                  <p className="text-xs text-slate-500 mt-1">PM2.5 predicted: {prediction?.['Predicted_PM2.5'] ?? '--'} µg/m³</p>
                 </div>
-                <div className="p-2 bg-[#10B981]/10 rounded-lg shrink-0">
-                  <Activity className="w-5 h-5 text-[#10B981]" />
-                </div>
-              </div>
-            </div>
-
-            {/* Bento Alert 2 (Warning) */}
-            <div className="bg-[#FFFFFF] border-2 border-slate-800 p-4 rounded-xl shadow-[4px_4px_0_0_rgba(249,115,22,0.2)] border-l-8 border-l-[#F97316] transition-transform hover:-translate-y-1">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-bold text-slate-800">High Risk at 22:00</h3>
-                  <p className="text-xs text-slate-500 mt-1">PM2.5 predicted to spike to 85. Keep windows closed.</p>
-                </div>
-                <div className="p-2 bg-[#F97316]/10 rounded-lg shrink-0">
-                  <ShieldAlert className="w-5 h-5 text-[#F97316]" />
+                <div className={`p-2 ${prediction?.Risk_Level === 'Low' ? 'bg-[#10B981]/10' : 'bg-[#F97316]/10'} rounded-lg shrink-0`}>
+                  {prediction?.Risk_Level === 'Low' ? <Activity className="w-5 h-5 text-[#10B981]" /> : <ShieldAlert className="w-5 h-5 text-[#F97316]" />}
                 </div>
               </div>
             </div>
