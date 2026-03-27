@@ -5,7 +5,7 @@ During the hackathon, teams must follow a structured workflow for tracking progr
 Whenever the user says **"CREATE CHANGELOG"**, generate a structured entry in `CHANGELOG.md` using the format below:
 
 ```md
-## Hour X
+## HH:MM
 
 ### Features Added
 - ...
@@ -20,7 +20,7 @@ Whenever the user says **"CREATE CHANGELOG"**, generate a structured entry in `C
 The changelog must always reflect real work completed and should not contain fabricated or assumed content. Commit messages should follow a consistent format like:
 
 ```
-[Hour X] Description of changes
+[HH:MM] Description of changes
 ```
 
 All team members must actively contribute to the repository, and by the end of the hackathon, each member must have at least one commit associated with their account.
