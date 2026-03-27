@@ -1,223 +1,36 @@
-# 🚀 Welcome to NEXUS
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-### Conducted by | CLIQUE x ACM MITS |
+## Getting Started
 
-### 📅 March 27 & 28
+First, run the development server:
 
-### 📍 Muthoot Institute of Technology and Science
-
-<p align="center">
-  <img src="template_acm.png" width="500"/>
-  <img src="template_clique.png" width="250"/>
-</p>
-
----
-
-### 📖 Description
-
-A **16-hour hackathon** across various domains where innovation meets execution. Build, collaborate, and push your limits.
-
----
-
-## 🧠 Project Details (To be filled by participants)
-
-```md
-### 🏷️ Project Name:
-<Your Project Name>
-
-### 🎯 Chosen Domain:
-<One from the given domains>
-
-### ❗ Problem Statement:
-<What problem are you solving?>
-
-### 💡 Solution:
-<How does your project solve the problem?>
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
----
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## 🎯 Hackathon Domains
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-Participants must choose **one** of the following domains:
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-1️⃣ Digital Asset Protection
-2️⃣ Smart Supply Chains
-3️⃣ Digital Health & Predictive Care
-4️⃣ Climate Intelligence
-5️⃣ Cybersecurity & Threat Intelligence
+## Learn More
 
----
+To learn more about Next.js, take a look at the following resources:
 
-## ⚙️ Hackathon Workflow & Rules
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-To ensure fairness and transparency, we have designed a structured development and tracking system.
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
----
+## Deploy on Vercel
 
-### 🔗 GitHub Template
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-👉 **Template Repo:** `{link}`
-
-* All teams must **fork this repository**
-* Fork name must follow:
-
-```
-<TeamId>_<TeamName>_ACMNexus26
-```
-
-* Example:
-
-```
-12_CodeWarriors_ACMNexus26
-```
-
-* You may rename the repository **after the event ends**
-
----
-
-
----
-
-## 👥 Participation Rules
-
-* Team Size: **2–4 members**
-* **Pre-created projects are strictly not allowed**
-* All work must be done **during the hackathon timeframe**
-* Only registered team members must participate
-* Do **not attack or interfere** with college infrastructure/network
-* Follow all instructions from the organizing team
-
----
-
-## 📁 Repository Structure
-
-
-Repository must not be private. The template Repository includes:
-
-```
-AGENTS.md
-README.md
-CHANGELOG.md
-/progress/
-```
-
----
-
-## ⏱️ Hourly Progress Requirements
-
-Every hour, teams must:
-
-* Make **at least one commit**
-* Add **at least one progress update** inside `/progress/`
-
-Progress can include:
-
-* Screenshots
-* Screen recordings
-* Dataset snapshots
-* Any meaningful proof of work
-
-### 📂 Progress Format
-
-```
-/progress
-1.png
-2.png
-3.png
-```
-
-* Files must be **numbered sequentially**
-* Each file should reflect **actual development progress**
-
----
-
-## 📝 Changelog Rules (VERY IMPORTANT)
-
-Every commit must be reflected in `CHANGELOG.md`.
-
-You can:
-
-* Update it per commit, OR
-* Update it periodically (but must be complete at the end)
-
----
-
-### 📌 Changelog Format
-
-```md
-## HH:MM
-
-### Features Added
-- Added login functionality
-- Implemented API integration
-
-### Files Modified
-- auth.js
-- login.jsx
-
-### Issues Faced
-- Firebase auth errors
-- API timeout issues
-```
-
----
-
-💡 Tip:
-Instructions are already included in `AGENTS.md`.
-You can simply prompt it to **"CREATE CHANGELOG"** to follow the format.
-
----
-
-## 📖 Documentation
-
-We have provided:
-
-* Examples
-* Guidelines
-
-Inside:
-
-* `AGENTS.md`
-* `README.md`
-
-Please follow them strictly.
-
----
-
-## 🔍 Monitoring & Verification
-
-* Random checks will be conducted during the hackathon
-* Organizers may:
-
-  * Inspect commit history
-  * Review changelog consistency
-  * Verify progress evidence
-
----
-
-## 👨‍💻 Team Collaboration Rules
-
-* All members must be added as **collaborators**
-* By the end of the hackathon:
-
-  * **Each member must have at least one commit**
-
----
-
-## ⚠️ Disqualification Criteria
-
-* Use of **pre-built / pre-developed projects**
-* Fake or manipulated commit history
-* Missing hourly commits or progress updates
-* Incomplete or inconsistent changelog
-
----
-
-## 🏁 Final Note
-
-Focus on building, learning, and enjoying the experience.
-
----
-
-🔥 **Build. Break. Innovate. See you at NEXUS.**
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
