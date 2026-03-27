@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/core": "^8.3.0",
     "@deck.gl/aggregation-layers": "^9.2.11",
     "@deck.gl/layers": "^9.2.11",
     "@deck.gl/react": "^9.2.11",
@@ -24,6 +26,7 @@
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.3.0",
     "@tailwindcss/postcss": "^4",
     "@types/mapbox-gl": "^3.4.1",
     "@types/node": "^20",
