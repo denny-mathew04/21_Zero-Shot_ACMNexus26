@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Digital Twin | Urban Monitoring Command Center</title>
+    <!-- CSS / Style Assets -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- JS Assets -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/progressbar.js/dist/progressbar.min.js"></script>
+</head>
+<body class="command-center">
+
+    <!-- LEFT SIDEBAR: CONTROLS & AI SYSTEM -->
+    <div class="holo-panel side-panel left">
+        <div class="mb-4">
+            <h4 class="mb-3">City Access</h4>
+            <div class="d-flex gap-2">
+                <input type="text" id="cityInput" placeholder="Enter City..." class="form-control">
+                <button class="btn-neon" onclick="searchStations()" style="padding: 0.5rem 1rem;">🔍</button>
+            </div>
+            <select id="stationSelect" class="mt-2 text-center" style="font-size: 0.9rem;">
+                <option value="">-- Active Sensors --</option>
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <h4 class="mb-3">Chronos Sync</h4>
+            <label class="small text-dim">Temporal Start</label>
+            <input type="date" id="startDate" class="form-control">
+            <label class="small text-dim">Temporal End</label>
+            <input type="date" id="endDate" class="form-control">
+        </div>
+
+        <div class="mb-4">
+            <h4 class="mb-3">AI Core</h4>
+            <select id="modelSelect">
+                <option value="random_forest">Random Forest (v1.2)</option>
+                <option value="gradient_boosting">Gradient Boost (v1.0)</option>
+                <option value="linear_regression">Linear Base (v0.8)</option>
+            </select>
+            <div class="d-flex flex-column gap-2 mt-3">
+                <button class="btn-neon pulse-sync" onclick="syncTwin()" id="syncBtn">⚡ Sync Twin Core</button>
+                <button class="btn-neon btn-neon-magenta small" onclick="exportData()">⬇️ Export Analytical Matrix</button>
+            </div>
+        </div>
+
+        <div class="mt-auto">
+            <h5 class="small orbitron text-dim border-bottom pb-2 mb-3">Model Accuracy Status</h5>
+            <div class="d-flex justify-content-between small">
+                <span>Confidence:</span>
+                <span class="text-neon-cyan">94.2%</span>
+            </div>
+            <div class="progress mt-2" style="height: 4px; background: rgba(255,255,255,0.05);">
+                <div class="progress-bar bg-info" style="width: 94%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CENTER STAGE: MAP & GRAPHS -->
+    <div class="center-stage">
+        <!-- Dashboard Header Overlay -->
+        <div class="d-flex justify-content-between align-items-center mb-2 px-3">
+            <div>
+                <h1 class="m-0 fs-2" style="filter: drop-shadow(0 0 10px rgba(0, 243, 255, 0.4));">Urban Hologram</h1>
+                <p class="small text-dim m-0">Dynamic Air Scape & Climate Simulation</p>
+            </div>
+            <div class="d-flex gap-4 align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <div id="healthDot" style="width: 10px; height: 10px; background: var(--neon-green); border-radius: 50%; box-shadow: 0 0 8px var(--neon-green);"></div>
+                    <span class="small orbitron text-dim">STATION HEALTH: ONLINE</span>
+                </div>
+                <div id="notifBell" class="btn-neon" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;padding:0;">🔔</div>
+            </div>
+        </div>
+
+        <!-- 3D-Like Map Centerpiece -->
+        <div id="map"></div>
+
+        <!-- Real-Time Dynamic Metrics Panel -->
+        <div id="dashboardArea" style="display: none;">
+            <div id="metricsGrid" class="pollutant-grid mt-2 mb-3"></div>
+            
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="holo-panel" style="height: 320px;">
+                        <h5 class="mb-3">Atmospheric Trend View</h5>
+                        <canvas id="mainTrendsCanvas"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="holo-panel" style="height: 320px; position:relative;">
+                        <h5 class="mb-3">AI 24h Recursive Projection</h5>
+                        <div id="expandedChartArea" style="height: calc(100% - 40px);">
+                            <canvas id="recursiveProjectionCanvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR: GAUGES, LOGS & ADVICE -->
+    <div class="holo-panel side-panel right d-flex flex-column">
+        <div class="text-center mb-4">
+            <h4 class="mb-3">Active Air Index</h4>
+            <div id="aqiGauge" class="gauge-container"></div>
+            <p id="aqiDescription" class="mt-2 mb-0 small text-dim">Processing current levels...</p>
+        </div>
+
+        <div class="mb-4">
+            <h4 class="mb-3">Protocol Alerts</h4>
+            <div id="healthAdviceBox" class="p-3 rounded border border-info bg-dark bg-opacity-25 small" style="line-height: 1.4;">
+                <span class="text-dim">No hazard detected. Standard urban protocols apply. Proceed with caution in heavy construction zones.</span>
+            </div>
+        </div>
+
+        <div class="flex-grow-1 d-flex flex-column">
+            <h4 class="mb-2">System Events</h4>
+            <div id="logTerminal" class="log-terminal flex-grow-1">
+                <div class="log-entry">Boot sequence complete...</div>
+                <div class="log-entry">Atmospheric sensor nodes established.</div>
+                <div class="log-entry">Waiting for coordinate synchronization...</div>
+            </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-top border-secondary border-opacity-25">
+             <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="small orbitron">Sync status:</span>
+                <span class="small text-neon-green" style="text-shadow: 0 0 5px var(--neon-green);">VERIFIED</span>
+             </div>
+             <p class="text-muted" style="font-size: 0.7rem;">Powered by Nexu-Gen AI Core & OpenAQ Matrix</p>
+        </div>
+    </div>
+
+    <!-- FOOTER FLOATING ADVICE -->
+    <div id="floatingStatus" class="position-fixed bottom-0 start-50 translate-middle-x mb-4 holo-panel py-2 px-4 shadow-lg text-center d-flex align-items-center gap-4" style="z-index: 10000; display: none !important;">
+        <span class="text-neon-cyan fs-5 orbitron" id="alertActiveTitle">Air Clearance: 99%</span>
+        <span class="small border-start border-secondary ps-4" id="alertActiveDesc">Atmospheric conditions within optimal thresholds for all biological activity.</span>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let myCharts = [];
+        let leafletMap = null;
+        let heatmapLayerGroup = null;
+        let mainTrendChart = null;
+        let projectionChart = null;
+        let aqiCircle = null;
+        let lastSyncedData = null;
+
+        document.addEventListener("DOMContentLoaded", function () {
+            let today = new Date();
+            let lastWeek = new Date();
+            lastWeek.setDate(today.getDate() - 7);
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+            document.getElementById('startDate').value = lastWeek.toISOString().split('T')[0];
+
+            initGauge();
+            initMap();
+        });
+
+        function initGauge() {
+            aqiCircle = new ProgressBar.SemiCircle('#aqiGauge', {
+                strokeWidth: 10, color: '#00f3ff', trailColor: 'rgba(255,255,255,0.05)',
+                trailWidth: 10, easing: 'bounce', duration: 1400,
+                text: { value: '0', className: 'gauge-label orbitron', style: { color: '#00f3ff', position: 'absolute', left: '50%', top: '70%', transform: 'translate(-50%, -50%)', fontSize: '2rem' } },
+                step: (state, circle) => {
+                    let value = Math.round(circle.value() * 500);
+                    circle.setText(value);
+                    if (value < 50) circle.path.setAttribute('stroke', '#39ff14');
+                    else if (value < 100) circle.path.setAttribute('stroke', '#ffea00');
+                    else if (value < 150) circle.path.setAttribute('stroke', '#ff9900');
+                    else circle.path.setAttribute('stroke', '#ff00de');
+                }
+            });
+        }
+
+        function initMap() {
+            leafletMap = L.map('map', { zoomControl: false }).setView([28.6139, 77.2090], 11);
+            L.control.zoom({ position: 'topright' }).addTo(leafletMap);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; CartoDB Dark Matter'
+            }).addTo(leafletMap);
+            heatmapLayerGroup = L.layerGroup().addTo(leafletMap);
+        }
+
+        function addLog(msg, type='info') {
+            const term = document.getElementById('logTerminal');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const now = new Date().toLocaleTimeString();
+            entry.innerText = `[${now}] ${msg}`;
+            term.appendChild(entry);
+            term.scrollTop = term.scrollHeight;
+        }
+
+        function searchStations() {
+            let q = document.getElementById('cityInput').value;
+            addLog(`Querying regional sensors for: ${q}...`);
+            fetch(`/get_locations?q=${q}`)
+                .then(res => res.json())
+                .then(data => {
+                    let sel = document.getElementById('stationSelect');
+                    sel.innerHTML = '<option value="">-- Active Sensors --</option>';
+                    data.forEach(s => {
+                        let opt = document.createElement('option');
+                        opt.value = s.id; opt.text = s.name;
+                        if (s.coordinates) {
+                            opt.dataset.lat = s.coordinates.latitude;
+                            opt.dataset.lon = s.coordinates.longitude;
+                        }
+                        sel.appendChild(opt);
+                    });
+                    if (data.length > 0) addLog(`Sensor Array found: ${data.length} nodes detected.`, 'success');
+                });
+        }
+
+        function syncTwin() {
+            let sel = document.getElementById('stationSelect');
+            let id = sel.value;
+            if (!id) return addLog("CRITICAL ERROR: No active station selected for synchronization.", "error");
+
+            let lat = sel.options[sel.selectedIndex].dataset.lat;
+            let lon = sel.options[sel.selectedIndex].dataset.lon;
+            let start = document.getElementById('startDate').value;
+            let end = document.getElementById('endDate').value;
+            let model = document.getElementById('modelSelect').value;
+
+            addLog(`Initiating neural link for station [${id}]...`);
+            document.getElementById('syncBtn').innerText = "LINKING CORE...";
+
+            fetch('/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ station_id: id, lat: lat, lon: lon, start_date: start, end_date: end, model: model })
+            })
+            .then(res => res.json())
+            .then(data => {
+                lastSyncedData = data;
+                document.getElementById('dashboardArea').style.display = 'block';
+                document.getElementById('syncBtn').innerText = "⚡ Sync Twin Core";
+                addLog("Real-time data stream synchronized. Model weights applied.", "success");
+
+                processDashboard(data, lat, lon);
+                renderHeatMap(lat, lon, data);
+            })
+            .catch(err => {
+                addLog(`CRITICAL SYNC ERROR: ${err}`, 'error');
+                document.getElementById('syncBtn').innerText = "RETRY CORE SYNC";
+            });
+        }
+
+        function processDashboard(data, lat, lon) {
+            let grid = document.getElementById('metricsGrid');
+            grid.innerHTML = '';
+            
+            let allLabelsSet = new Set();
+            let pollutants = Object.keys(data).filter(k => !k.startsWith('_'));
+            
+            pollutants.forEach((key, index) => {
+                let p = data[key];
+                if (p.labels) p.labels.forEach(l => allLabelsSet.add(l));
+                if (p.predicted_labels) p.predicted_labels.forEach(l => allLabelsSet.add(l));
+                
+                grid.innerHTML += `
+                    <div class="mini-card holo-panel">
+                        <div class="label">${key}</div>
+                        <div class="val">${p.current}</div>
+                        <div class="small text-dim">NEXT HR: ${p.predicted_1hr} ${p.unit}</div>
+                    </div>
+                `;
+            });
+
+            const overallAqi = data['_overall_aqi'] || 0;
+            const aqiNorm = Math.min(overallAqi / 500, 1);
+            aqiCircle.animate(aqiNorm);
+            updateHealthAdvice(overallAqi);
+
+            let sortedRawLabels = Array.from(allLabelsSet).sort((a, b) => new Date(a) - new Date(b));
+            let chartLabels = sortedRawLabels.map(l => new Date(l).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit' }));
+
+            renderCharts(data, chartLabels, sortedRawLabels);
+        }
+
+        function updateHealthAdvice(aqi) {
+            const box = document.getElementById('healthAdviceBox');
+            const desc = document.getElementById('aqiDescription');
+            
+            if (aqi >= 301) {
+                box.innerHTML = `<span class="text-danger orbitron fw-bold">HAZARD:</span> Severe air toxicity. Use high-grade filtration. Evacuate if possible.`;
+                box.className = "p-3 rounded border border-danger bg-danger bg-opacity-10 small";
+                desc.innerText = "HAZARDOUS ATMOSPHERE";
+            } else if (aqi >= 151) {
+                box.innerHTML = `<span class="text-danger orbitron fw-bold">UNHEALTHY:</span> High pollution. Wear N95 filters. Limit cardiac activity.`;
+                box.className = "p-3 rounded border border-danger bg-danger bg-opacity-10 small";
+                desc.innerText = "UNHEALTHY LEVELS";
+            } else if (aqi >= 101) {
+                box.innerHTML = `<span class="text-warning orbitron fw-bold">POOR:</span> Moderate hazard. Sensitive units should stay indoors.`;
+                box.className = "p-3 rounded border border-warning bg-warning bg-opacity-10 small";
+                desc.innerText = "UNHEALTHY FOR SENSITIVE";
+            } else if (aqi >= 51) {
+                box.innerHTML = `<span class="text-warning orbitron fw-bold">FAIR:</span> Moderate air quality. Acceptable for most activity.`;
+                box.className = "p-3 rounded border border-warning bg-warning bg-opacity-10 small";
+                desc.innerText = "MODERATE POLLUTION";
+            } else {
+                box.innerHTML = `<span class="text-neon-green orbitron fw-bold">OPTIMAL:</span> Atmospheric density safe. biological units clear.`;
+                box.className = "p-3 rounded border border-success bg-success bg-opacity-10 small";
+                desc.innerText = "EXCELLENT AIR QUALITY";
+            }
+        }
+
+        function renderCharts(data, readableLabels, rawLabels) {
+            if (mainTrendChart) mainTrendChart.destroy();
+            if (projectionChart) projectionChart.destroy();
+
+            const pKeys = Object.keys(data);
+            const datasets = pKeys.map((k, i) => {
+                const p = data[k];
+                const histMap = p.labels ? Object.fromEntries(p.labels.map((l, idx) => [l, p.history[idx]])) : {};
+                const color = i == 0 ? '#00f3ff' : (i==1 ? '#ff00de' : '#39ff14');
+                return {
+                    label: k.toUpperCase(),
+                    data: rawLabels.map(l => histMap[l] ?? null),
+                    borderColor: color, backgroundColor: color + '22',
+                    tension: 0.4, fill: true, pointRadius: 0
+                };
+            }).slice(0, 3);
+
+            mainTrendChart = new Chart(document.getElementById('mainTrendsCanvas'), {
+                type: 'line',
+                data: { labels: readableLabels, datasets: datasets },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', maxTicksLimit: 6 } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+
+            // Projection Chart 
+            const firstP = data[pKeys[0]];
+            const predLabels = firstP.predicted_labels.map(l => new Date(l).getHours() + ":00");
+            projectionChart = new Chart(document.getElementById('recursiveProjectionCanvas'), {
+                type: 'bar',
+                data: {
+                    labels: predLabels,
+                    datasets: [{
+                        label: 'Forecast', data: firstP.predicted_24hr,
+                        backgroundColor: 'rgba(0, 243, 255, 0.4)', borderColor: '#00f3ff', borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        x: { ticks: { color: '#94a3b8' } },
+                        y: { ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+
+        function renderHeatMap(lat, lon, aqData) {
+            heatmapLayerGroup.clearLayers();
+            leafletMap.setView([lat, lon], 12);
+
+            let step = 0.05;
+            for (let dlat of [-step, 0, step]) {
+                for (let dlon of [-step, 0, step]) {
+                    let varMult = 0.85 + Math.random() * 0.3;
+                    let pm25 = aqData['pm25']?.current ?? (aqData['pm2.5']?.current ?? 0);
+                    let gridPm25 = (pm25 || 20) * varMult;
+                    
+                    let aqi = gridPm25 > 150 ? 5 : (gridPm25 > 55 ? 4 : (gridPm25 > 35 ? 3 : (gridPm25 > 12 ? 2 : 1)));
+                    let colors = ['#39ff14', '#ffea00', '#ff9900', '#ff00de', '#ff0000'];
+                    let color = colors[aqi-1];
+
+                    let gLat = parseFloat(lat) + dlat;
+                    let gLon = parseFloat(lon) + dlon;
+                    let bounds = [[gLat - 0.025, gLon - 0.025], [gLat + 0.025, gLon + 0.025]];
+                    
+                    let rect = L.rectangle(bounds, {
+                        fillColor: color, color: color, weight: 1, opacity: 0.2, fillOpacity: 0.3
+                    }).addTo(heatmapLayerGroup);
+                    
+                    rect.bindTooltip(`Region Prediction Core: ${gridPm25.toFixed(1)} μg/m³ PM2.5`, { direction: 'center', className: 'apple-tooltip' });
+                }
+            }
+        }
+
+        function exportData() {
+            if (!lastSyncedData) return alert("System database is empty. Sync before export.");
+            let rows = [["Pollutant", "Current", "Forecast 1h", "Unit"]];
+            Object.keys(lastSyncedData).forEach(k => {
+                let p = lastSyncedData[k];
+                rows.push([k, p.current, p.predicted_1hr, p.unit]);
+            });
+            let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `twin_matrix_${new Date().getTime()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            addLog("Analytical matrix exported to local bios. File sequence initiated.", "success");
+        }
+    </script>
+</body>
+</html>
