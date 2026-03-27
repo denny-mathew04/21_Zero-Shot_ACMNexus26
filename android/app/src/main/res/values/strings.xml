@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Localized Risk App</string>
-    <string name="title_activity_main">Localized Risk App</string>
-    <string name="package_name">com.hackathon.riskapp</string>
-    <string name="custom_url_scheme">com.hackathon.riskapp</string>
-</resources>
