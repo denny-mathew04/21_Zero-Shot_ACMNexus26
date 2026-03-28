@@ -215,6 +215,10 @@ const APP = {
     }
 
     this.state.selectedLocation = { lat, lng, name, stationId: id };
+    
+    // Reveal Panels
+    document.querySelectorAll('.panel-init-hidden').forEach(el => el.classList.add('panel-reveal'));
+    
     this.fetchAndRender();
     MAP.flyTo(lat, lng, 12);
     MAP.loadNearbyStations(lat, lng);
@@ -297,6 +301,10 @@ const APP = {
     document.getElementById('city-input').value = name;
     document.getElementById('city-dropdown').classList.remove('show');
     this.state.selectedLocation = { lat, lng, name };
+    
+    // Reveal Panels
+    document.querySelectorAll('.panel-init-hidden').forEach(el => el.classList.add('panel-reveal'));
+    
     this.fetchAndRender();
     MAP.flyTo(lat, lng, 11);
     MAP.loadNearbyStations(lat, lng);
@@ -343,8 +351,17 @@ const APP = {
       this.state.owmPollution  = bund.owmPollution || null;
       this.state.uv            = bund.uv || null;
 
-      // Build ML window
-      this.state.mlWindow = ML.buildWindow(meas);
+      // Build ML window from REAL 30-day historical hourly AQ data
+      let realHistory = [];
+      try {
+        realHistory = await API.getHistoricalAQ(loc.lat, loc.lng, 30);
+      } catch (e) {
+        console.warn('Historical AQ unavailable, using simulated window:', e.message);
+      }
+      // Fall back to simulated 24-hr window if real data is empty
+      this.state.mlWindow = realHistory.length >= 24
+        ? realHistory
+        : ML.buildWindow(meas);
       this.state.predSeries = ML.predictSeries('ensemble', this.state.mlWindow, 48);
 
       // Merge pollutant data
@@ -475,8 +492,9 @@ const APP = {
     const catEl  = document.getElementById('gauge-cat');
 
     if (circle) {
-      const r = 80, circ = 2 * Math.PI * r;
+      const r = 62, circ = 2 * Math.PI * r; // matches r=62 in SVG (160×160 ring)
       const pct = aqi !== null ? Math.min(aqi / 300, 1) : 0;
+      circle.style.strokeDasharray  = circ;
       circle.style.strokeDashoffset = circ - pct * circ;
       circle.style.stroke = info.color;
     }

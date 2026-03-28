@@ -214,6 +214,50 @@ const API = {
     return results;
   },
 
+  /* Fetch real historical AQ data for ML training window (past N days, hourly) */
+  async getHistoricalAQ(lat, lng, days = 30) {
+    try {
+      const endDate   = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+      const fmt = d => d.toISOString().split('T')[0];
+
+      const url = `${CONFIG.OPEN_METEO_AIR_BASE}/air-quality?latitude=${lat}&longitude=${lng}`
+        + `&hourly=pm2_5,nitrogen_dioxide,european_aqi`
+        + `&start_date=${fmt(startDate)}&end_date=${fmt(endDate)}&timezone=auto`;
+
+      const data = await this._fetch(url, this.openMeteoHeaders());
+      if (!data.hourly || !data.hourly.time) return [];
+
+      const times = data.hourly.time;
+      const pm25s = data.hourly.pm2_5 || [];
+      const no2s  = data.hourly.nitrogen_dioxide || [];
+      const aqis  = data.hourly.european_aqi || [];
+
+      return times.map((t, i) => {
+        const dt   = new Date(t);
+        const pm25 = pm25s[i] ?? 0;
+        const no2  = no2s[i]  ?? 0;
+        // Use EPA breakpoint formula (pm25ToAqi) for accurate US AQI — avoids EU scale inflation
+        const aqi  = pm25 > 0 ? (pm25ToAqi(pm25) || 0) : 0;
+        return {
+          aqi,
+          pm25,
+          pm10:     0,
+          no2,
+          temp:     25,
+          humidity: 60,
+          wind:     10,
+          hour:     dt.getHours(),
+          dow:      dt.getDay(),
+        };
+      }).filter(r => r.aqi > 0); // drop missing readings
+    } catch (e) {
+      console.warn('Historical AQ fetch failed:', e.message);
+      return [];
+    }
+  },
+
   /* Geo: city name → lat/lng */
   async geocodeCity(cityName) {
     const url = `${CONFIG.OPEN_METEO_GEO_BASE}/search?name=${encodeURIComponent(cityName)}&count=5`;
