@@ -1,122 +1,118 @@
-# EarthGuard — Climate Digital Twin
-### Hackathon Edition · Pollution Control Problem Statement
+# 🌍 EarthGuard — Climate Digital Twin
+### AI-Powered Planetary Health Intelligence Dashboard
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+![Status: Hackathon Edition](https://img.shields.io/badge/Status-Hackathon_Edition-orange)
+![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-green)
 
 ---
 
-## 🚀 Quick Start
+**EarthGuard** is a high-fidelity Climate Digital Twin designed to democratize environmental data. Built for the **Pollution Control Problem Statement**, it bridges the gap between raw sensor data and actionable environmental policy through multi-algorithmic Machine Learning and real-time geospatial visualization.
 
-### 1. Get API Keys (both free)
+## 🚀 Key Features
 
-| Service | URL | Notes |
-|---|---|---|
-| **OpenWeatherMap** | https://openweathermap.org/api | Free tier: 1000 calls/day |
-| **OpenAQ** | https://explore.openaq.org | Free, no key needed for basic use |
-
-### 2. Open the app
-Open `index.html` in any modern browser — no server needed.
-
-### 3. Enter your keys
-A banner at the top will prompt you. Paste your OpenWeatherMap key.
-Keys are saved to `localStorage` — enter once, they persist.
+*   **🛰️ Real-Time Global Monitoring:** Integration with **OpenAQ v3 API**, tracking 10,000+ stations globally for PM2.5, NO₂, O₃, and more.
+*   **🧠 Multi-Algorithm Forecasting:** Predicts air quality trends using an ensemble of 8 ML models (Ensemble, LSTM, XGBoost, etc.) directly in the browser.
+*   **🗺️ Geospatial Intelligence:** Interactive high-resolution map with live color-coded station updates.
+*   **📈 Advanced Analytics:** Includes hourly heatmaps, wind rose diagrams, and temperature-pollution correlation scatter plots.
+*   **🏥 Health-Centric Alerts:** Personalized health impact assessments for 6 distinct population groups.
+*   **📜 Policy Engine:** AI-derived policy recommendations based on localized AQI thresholds and pollutant profiles.
 
 ---
 
-## 📁 File Structure
+## 🛠️ Architecture & Tech Stack
 
+```mermaid
+graph TD
+    A[OpenAQ API] -->|Real-time Pollutants| C(EarthGuard Engine)
+    B[OpenWeatherMap API] -->|Weather Context| C
+    C --> D[ML Forecasting Layer]
+    C --> E[Geospatial Viz Layer]
+    D --> F{Model Selection}
+    F -->|Ensemble/LSTM/RF| G[User Dashboard]
+    E --> G
 ```
+
+*   **Frontend:** Vanilla JS, HTML5, CSS3 (Glassmorphism UI)
+*   **Visualizations:** Chart.js, Leaflet.js
+*   **Machine Learning:** Custom Pure JS implementation of 8 statistical and neural models.
+*   **Data Sources:** OpenAQ (Pollution) & OpenWeatherMap (Atmospheric).
+
+---
+
+## 🚦 Getting Started
+
+### 1. Prerequisites
+- A modern web browser (Chrome, Firefox, Safari, Edge).
+- API Keys: 
+  - **OpenWeatherMap:** [Get Free Key](https://openweathermap.org/api)
+  - **OpenAQ:** (No key required for base tier).
+
+### 2. Local Setup
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/denny-mathew04/21_Zero-Shot_ACMNexus26.git
+   ```
+2. Open `index.html` in your browser.
+
+> [!TIP]
+> **Server Recommendation:** To avoid cross-origin (CORS) issues on some networks, run a simple local server:
+> ```bash
+> npx serve .
+> ```
+
+---
+
+## 🤖 Forensic Machine Learning
+EarthGuard compares 8 different models to find the most accurate prediction for the specific micro-climate selected:
+
+| Model | Strengths |
+|---|---|
+| **Ensemble (Hybrid)** | Weighted average of all models; highest stability. |
+| **LSTM** | Best for capturing temporal diurnal cycles. |
+| **Random Forest** | Robust against outliers and non-linear sensor drift. |
+| **XGBoost** | High-performance boosting for fast convergence. |
+| **ARIMA** | Classic statistical time-series for seasonal trends. |
+| **SVR / GBM / LR** | Linear and non-linear regression baselines. |
+
+---
+
+## 📁 Repository Structure
+```text
 aethertwin/
-├── index.html          ← Main app entry point
+├── index.html          # Core interface
 ├── css/
-│   └── style.css       ← All styles
+│   └── style.css       # Professional glass-morphic styling
 ├── js/
-│   ├── config.js       ← API keys, AQI constants, helpers
-│   ├── ml.js           ← All ML algorithms (pure JS)
-│   ├── api.js          ← OpenAQ v3 + OpenWeatherMap fetch layer
-│   ├── charts.js       ← Chart.js visualizations
-│   ├── map.js          ← Leaflet map + station markers
-│   └── app.js          ← Main controller / orchestrator
+│   ├── ml.js           # Core ML engine (LSTM, XGBoost, etc.)
+│   ├── api.js          # REST integration for Data V3
+│   ├── map.js          # Leaflet integration & clusters
+│   ├── charts.js       # Analytical visualizations
+│   └── app.js          # State management & orchestration
 ```
 
 ---
 
-## 🤖 ML Algorithms Available
+## 📊 US EPA Air Quality Index (AQI) Reference
 
-| Algorithm | Key | Strengths |
+| AQI Range | Category | Health Impact Note |
 |---|---|---|
-| **Ensemble (Best)** | `ensemble` | Weighted average of all, lowest RMSE |
-| **Random Forest** | `rf` | Handles non-linearity, robust to outliers |
-| **Gradient Boosting** | `gbm` | Sequential error correction |
-| **XGBoost** | `xgb` | Regularized boosting, fast |
-| **LSTM Neural Net** | `lstm` | Temporal patterns, diurnal cycles |
-| **Linear Regression** | `lr` | Interpretable baseline |
-| **SVR (RBF kernel)** | `svr` | Good with small datasets |
-| **ARIMA (2,1,1)** | `arima` | Statistical time-series |
-
-Switch algorithms via the dropdown or by clicking model cards.
+| **0 - 50** | 🟢 Good | Air quality is considered satisfactory. |
+| **51 - 100** | 🟡 Moderate | Acceptable, though some risk for sensitive groups. |
+| **101 - 150** | 🟠 Unhealthy (S.G.) | Members of sensitive groups may experience health effects. |
+| **151 - 200** | 🔴 Unhealthy | Everyone may begin to experience health effects. |
+| **201 - 300** | 🟣 Very Unhealthy | Health alert: everyone may experience serious effects. |
+| **301+** | 🟤 Hazardous | Health warning of emergency conditions. |
 
 ---
 
-## 🌍 Data Sources
+## 🛣️ Roadmap
+- [ ] **Mobile Native App:** Integration via React Native.
+- [ ] **Satellite Data:** Sentinel-5P integration for NO2 plume tracking.
+- [ ] **Hyper-Local IoT:** Support for private PurpleAir or custom sensor nodes.
+- [ ] **Predictive Alerting:** Push notifications for forecasted hazards.
 
-- **OpenAQ v3 API** — 10,000+ monitoring stations worldwide. Real-time PM2.5, PM10, NO₂, O₃, SO₂, CO.
-- **OpenWeatherMap** — Current weather + 5-day forecast + UV index + OWM air pollution component.
-
-### Cascade Selector Flow
-```
-Country → City → Station → Live Data
-```
-Every station in the OpenAQ network is accessible.
+## 📄 License
+Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
-
-## 🗺️ Features
-
-- **Global interactive map** — live color-coded markers from OpenAQ (green→hazardous)
-- **Free-text city search** — searches both OpenAQ and OWM geocoder simultaneously
-- **7-day weather forecast** with AQI estimates per day
-- **24h / 7d / 30d trend chart** with actual vs predicted overlay + confidence interval
-- **Hourly pollution heatmap** (day × hour)
-- **Wind rose diagram** with current wind direction arrow
-- **Health impact assessment** by population group (6 categories)
-- **AI policy recommendations** — adapts to current AQI and pollutant levels
-- **Multi-algorithm prediction table** — all 8 algorithms compared simultaneously
-- **Station table** — all stations for selected city with last-update timestamps
-- **Emission sources doughnut chart**
-- **Temp vs AQI scatter correlation** with regression line
-- **Live alerts** — auto-generated from real data thresholds
-
----
-
-## ⚠️ CORS Note
-
-OpenAQ v3 supports CORS from browsers. OWM also supports CORS.
-If you hit CORS errors, serve via a local HTTP server:
-
-```bash
-# Python 3
-python -m http.server 8080
-
-# Node.js
-npx serve .
-```
-
-Then open: `http://localhost:8080`
-
----
-
-## 📊 AQI Scale (US EPA)
-
-| Range | Category | Color |
-|---|---|---|
-| 0–50 | Good | 🟢 Green |
-| 51–100 | Moderate | 🟡 Yellow |
-| 101–150 | Unhealthy for Sensitive Groups | 🟠 Orange |
-| 151–200 | Unhealthy | 🔴 Red |
-| 201–300 | Very Unhealthy | 🟣 Purple |
-| 301+ | Hazardous | 🟤 Maroon |
-
-PM2.5 → US AQI conversion uses official EPA breakpoints.
-
----
-
-Built for Climate Hackathon · Pollution Control Problem Statement
+**EarthGuard** • *Empowering Communities through Climate Data Transparency.*
